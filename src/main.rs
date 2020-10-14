@@ -49,6 +49,7 @@ fn main() -> anyhow::Result<()> {
 
         let ui = Ui::TextField {
             current_text: buffer_contents.clone(),
+            cursor_idx,
         };
         let serialized = serde_json::to_vec(&ui)?;
         server_websocket.write_message(Message::Binary(serialized))?;
