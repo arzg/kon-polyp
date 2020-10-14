@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use polyp::{Ui, UserInput};
+use polyp::{Key, Ui, UserInput};
 use std::env;
 use tungstenite::Message;
 use url::Url;
@@ -18,9 +18,10 @@ fn main() -> anyhow::Result<()> {
     println!("kon-polyp: connected to server\r");
 
     let mut buffer_contents = String::new();
+    let mut cursor_idx = 0;
 
     loop {
-        let pressed_character = match server_websocket.read_message()? {
+        let pressed_key = match server_websocket.read_message()? {
             Message::Binary(json) => {
                 let UserInput::PressedKey(pressed_character) = serde_json::from_slice(&json)?;
                 pressed_character
@@ -28,9 +29,22 @@ fn main() -> anyhow::Result<()> {
             Message::Close(_) => return Ok(()),
             _ => unreachable!(),
         };
-        println!("kon-polyp: user pressed ‘{}’\r", pressed_character);
+        println!("kon-polyp: user pressed ‘{:?}’\r", pressed_key);
 
-        buffer_contents.push(pressed_character);
+        match pressed_key {
+            Key::Char(c) => {
+                buffer_contents.insert(cursor_idx, c);
+                cursor_idx += 1;
+            }
+            Key::Backspace => {
+                buffer_contents.remove(cursor_idx - 1);
+                cursor_idx -= 1;
+            }
+            Key::Left => cursor_idx -= 1,
+            Key::Right => cursor_idx += 1,
+            _ => {}
+        }
+
         println!("kon-polyp: buffer now is ‘{}’\r", buffer_contents);
 
         let ui = Ui::TextField {
