@@ -1,17 +1,14 @@
+use polyp::protocol::Connection;
 use polyp::{Key, Ui, UserInput};
-use std::io::{self, Write};
 
 fn main() -> anyhow::Result<()> {
+    let mut server_connection = Connection::new_from_current_process();
+
     let mut buffer_contents = String::new();
     let mut cursor_idx = 0;
 
     loop {
-        let UserInput::PressedKey(pressed_key) = {
-            let mut buf = String::new();
-            io::stdin().read_line(&mut buf)?;
-            serde_json::from_slice(buf.as_bytes())?
-        };
-
+        let UserInput::PressedKey(pressed_key) = server_connection.recv_message()?;
         eprintln!("kon-polyp: user pressed ‘{:?}’\r", pressed_key);
 
         match pressed_key {
@@ -34,9 +31,7 @@ fn main() -> anyhow::Result<()> {
             current_text: buffer_contents.clone(),
             cursor_idx,
         };
-        let serialized = serde_json::to_vec(&ui)?;
-        io::stdout().write_all(&serialized)?;
-        io::stdout().write_all(b"\n")?;
+        server_connection.send_message(&ui)?;
         eprintln!("kon-polyp: wrote UI to server\r");
     }
 }
