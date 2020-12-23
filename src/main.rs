@@ -8,8 +8,13 @@ fn main() -> anyhow::Result<()> {
     let mut cursor_idx = 0;
 
     loop {
-        let ProcessletMsg::UserInput(UserInput::PressedKey(pressed_key)) =
-            server_connection.recv_message()?;
+        let pressed_key = match server_connection.recv_message()? {
+            ProcessletMsg::UserInput(UserInput::PressedKey(k)) => k,
+            ProcessletMsg::Shutdown => {
+                eprintln!("kon-polyp: shutting down...\r");
+                return Ok(());
+            }
+        };
 
         eprintln!("kon-polyp: user pressed ‘{:?}’\r", pressed_key);
 
