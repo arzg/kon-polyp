@@ -1,5 +1,5 @@
 use polyp::protocol::Connection;
-use polyp::{Key, Ui, UserInput};
+use polyp::{Key, ProcessletMsg, Ui, UserInput};
 
 fn main() -> anyhow::Result<()> {
     let mut server_connection = Connection::new_from_current_process();
@@ -8,7 +8,9 @@ fn main() -> anyhow::Result<()> {
     let mut cursor_idx = 0;
 
     loop {
-        let UserInput::PressedKey(pressed_key) = server_connection.recv_message()?;
+        let ProcessletMsg::UserInput(UserInput::PressedKey(pressed_key)) =
+            server_connection.recv_message()?;
+
         eprintln!("kon-polyp: user pressed ‘{:?}’\r", pressed_key);
 
         match pressed_key {
