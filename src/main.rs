@@ -1,14 +1,14 @@
-use polyp::protocol::Connection;
+use jsonl::Connection;
 use polyp::{Key, ProcessletMsg, Ui, UserInput};
 
 fn main() -> anyhow::Result<()> {
-    let mut server_connection = Connection::new_from_current_process();
+    let mut server_connection = Connection::new_from_stdio();
 
     let mut buffer_contents = String::new();
     let mut cursor_idx = 0;
 
     loop {
-        let pressed_key = match server_connection.recv_message()? {
+        let pressed_key = match server_connection.read()? {
             ProcessletMsg::UserInput(UserInput::PressedKey(k)) => k,
             ProcessletMsg::Shutdown => {
                 eprintln!("kon-polyp: shutting down...\r");
@@ -38,7 +38,7 @@ fn main() -> anyhow::Result<()> {
             current_text: buffer_contents.clone(),
             cursor_idx,
         };
-        server_connection.send_message(&ui)?;
+        server_connection.write(&ui)?;
         eprintln!("kon-polyp: wrote UI to server\r");
     }
 }
